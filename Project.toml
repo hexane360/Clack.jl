@@ -1,0 +1,18 @@
+name = "Clack"
+uuid = "d5482787-0401-452d-ac49-86aac02b8eed"
+license = "LGPL-3.0-or-later"
+authors = ["Colin Gilgenbach <colin@gilgenbach.net>"]
+version = "0.1.0"
+
+[deps]
+FunctionWrappers = "069b7b12-0de2-55c6-9aab-29f3d0a68a2e"
+Maybe = "334f122f-1118-46cc-837f-bff747ee6f78"
+Results = "a6f57dee-de39-11ea-01ba-9f0f7c89923c"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+
+[extras]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test", "Documenter"]
