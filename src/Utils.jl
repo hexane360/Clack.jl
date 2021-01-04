@@ -36,21 +36,21 @@ function catch_result(f::Function)::Result
 end
 
 """Formats a list of values in a human-readable format."""
-function format_list(list::AbstractArray)::String
+function format_list(list::AbstractArray; conj::String = "and")::String
 	if length(list) == 0
 		""
 	elseif length(list) == 1
 		string(list[1])
 	else
 		formatted = join(list[1:end-1], ", ")
-		"$formatted and $(list[end])"
+		"$formatted $(conj) $(list[end])"
 	end
 end
 format_list(list)::String = format_list(collect(list))
 
-function plural(list::AbstractArray)::String
-	length(list) == 1 ? "" : "s"
-end
+plural(arr)::String = plural(length(arr))
+plural(::Val{1})::String = ""
+plural(::Int)::String = "s"
 
 """Filters `nothing` values from an iterator."""
 function filter_none(itr)
