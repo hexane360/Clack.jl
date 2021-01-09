@@ -32,11 +32,16 @@ to_parse_type(p::ParseType)::ParseType = p
 to_parse_type(::Type{Bool})::BoolType = BoolType()
 to_parse_type(::Type{AbstractString})::IdType = IdType()
 to_parse_type(f::Function)::FuncType = FuncType(f)
-function to_parse_type(tup::T)::TupleType where {T <: Tuple} TupleType(map(to_parse_type, tup)) end
+function to_parse_type(tup::T)::TupleType where {T <: Tuple} TupleType(tup...) end
 function to_parse_type(::Type{T})::NumType where {T <: Number} NumType{T}() end
+function to_parse_type(::Type{T})::Union{} where {T <: ParseType} error("Uninstantiated ParseType `$T` passed as parameter type") end
 function to_parse_type(::Type{T})::TypeType where {T} TypeType{T}() end
+function to_parse_type(u::Union)::UnionType UnionType(get_union_types(u)...) end
 #function to_parse_type(f::FunctionWrapper{T, Tuple{String}})::FuncType{T} where {T} FuncType(f) end
 #function to_parse_type(f::FunctionWrapper{Result{T, String}, Tuple{String}})::FuncType{T} where {T} FuncType(f) end
+
+get_union_types(u::Union) = [u.a; get_union_types(u.b)]
+get_union_types(u) = [u]
 
 """Identity `ParseType`"""
 struct IdType <: ParseType{AbstractString} end

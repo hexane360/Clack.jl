@@ -11,10 +11,11 @@ import Results: try_pop!
 include("Utils.jl")
 include("Types.jl")
 include("Parameters.jl")
+include("macros.jl")
 using .Utils
 using .Types
 using .Parameters
-
+using .macros
 
 export Parameter, Flag, Option, Argument, Command
 export ParseType, IdType, BoolType, NumType, RangeType, ChoiceType, FuncType, TypeType, TupleType
@@ -161,7 +162,7 @@ function parse_long(state::ParseState)::Result{Tuple{}, String}
 	opt = @try_unwrap try_get(state.command.long_opts, arg[3:end], () -> "Unknown option '$arg'")
 
 	state[opt.name] = if isa(opt, Flag)
-		arg[3:end] ∈ opt.names[1]
+		get_flag_value(opt, arg[3:end])
 	else
 		@try_unwrap parse_type(opt.type, state, () -> arg)
 	end
@@ -179,7 +180,7 @@ function parse_short(state::ParseState)::Result{Tuple{}, String}
 		end
 		opt = @try_unwrap try_get(state.command.short_opts, c, () -> "Unknown option '-$c'")
 		if isa(opt, Flag)
-			state[opt.name] = Some(c) === opt.short[1]
+			state[opt.name] = get_flag_value(opt, c)
 		else
 			option_c = c
 		end

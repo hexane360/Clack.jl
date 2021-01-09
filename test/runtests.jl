@@ -11,11 +11,12 @@ isapprox(lhs::Err, rhs::Result)::Bool = is_err(rhs) && isapprox(lhs.err, rhs.err
 include("test_utils.jl")
 include("test_types.jl")
 include("test_parameters.jl")
+include("test_macros.jl")
 
 @testset "parse" begin
-	c = Command(Argument(Int, :p1, required=true),
-	            Argument(Int, :p2, default=-1),
-	            Option(Int, :int, short='i'),
+	c = Command(Argument(:p1, Int, required=true),
+	            Argument(:p2, Int, default=-1),
+	            Option(:int, Int, 'i'),
 	            Flag(:good, "on", "off", required=true))
 
 	@test parse(c, ["5", "-i", "2", "--off", "10"]) == Ok(Dict(
