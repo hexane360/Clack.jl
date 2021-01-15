@@ -6,6 +6,7 @@ using Results
 import Base: push!
 
 export catch_result, format_list, filter_none, plural
+export to_nullable, to_array, to_symbol
 
 # function try_pop!(a::AbstractArray{T})::Maybe.T{T} where {T}
 # 	isempty(a) ? nothing : Some(pop!(a))
@@ -56,6 +57,29 @@ plural(::Int)::String = "s"
 function filter_none(itr)
 	map((s) -> isa(s, Some) ? s.value : s,
 	    Iterators.filter((v) -> !isnothing(v), itr))
+end
+
+"""Convert an `Option` value to a nullable type unwrapping `Some` values."""
+function to_nullable end
+
+function to_nullable(v::Some{T})::T where {T} unwrap(v) end
+function to_nullable(v::Nothing)::Nothing v end
+
+function to_array(::Nothing)::Array{Union{}}
+	[]
+end
+function to_array(val::T)::Array{T} where {T}
+	[val]
+end
+function to_array(arr::AbstractArray{T})::Array{T} where {T} Array(arr) end
+
+to_symbol(s::Symbol)::Symbol = s
+function to_symbol(s::String)::Symbol
+	try
+		Symbol(s)
+	catch e
+		error("'$s' is not a valid symbol/parameter name")
+	end
 end
 
 end # module

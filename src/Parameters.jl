@@ -1,6 +1,8 @@
 module Parameters
 
-using Maybe
+import Results
+using Results: try_peek, unwrap_or, to_option
+
 using ..Types
 using ..Utils
 import ..Types: output_type
@@ -19,7 +21,7 @@ abstract type Parameter{T} end
 struct Flag{T} <: Parameter{T}
 	name::Symbol
 	names::NTuple{2, Array{AbstractString}}
-	short::NTuple{2, Maybe.T{Char}}
+	short::NTuple{2, Results.Option{Char}}
 	default::Union{T, Bool, Nothing}
 	values::NTuple{2, T}
 	required::Bool
@@ -41,7 +43,7 @@ struct Flag{T} <: Parameter{T}
 				promote_type(T, typeof(default))
 			end
 		end
-		new{T}(name, names, to_maybe.(short), default, values, required)
+		new{T}(name, names, to_option.(short), default, values, required)
 	end
 end
 
@@ -74,7 +76,7 @@ function Flag(name::Symbol,
               false_short::Union{Char, Nothing}=nothing,
               values::NTuple{2}=(true, false),
               default=nothing, required::Bool=false)
-	Flag(name, to_array.((true_name, false_name)), to_maybe.((true_short, false_short));
+	Flag(name, to_array.((true_name, false_name)), to_option.((true_short, false_short));
 	     values=values, default=default, required=required)
 end
 
@@ -82,7 +84,7 @@ struct Option{T, U <: T} <: Parameter{T}
 	name::Symbol
 	type::ParseType{U}
 	names::Array{AbstractString}
-	short::Maybe.T{Char}
+	short::Results.Option{Char}
 	default::Union{T, Nothing}
 	required::Bool
 	function Option(name::Symbol, type, names::Array{<:AbstractString};
@@ -93,7 +95,7 @@ struct Option{T, U <: T} <: Parameter{T}
 		U = output_type(parse_type)
 		#and union it with the type of `default` to get the final type
 		T = required ? U : promote_type(U, typeof(default))
-		new{T, U}(name, parse_type, names, to_maybe(short), default, required)
+		new{T, U}(name, parse_type, names, to_option(short), default, required)
 	end
 end
 
@@ -102,9 +104,11 @@ function Option(name::Symbol, type,
                 default=nothing, required::Bool=false)
 	names = [String(name)]
 	append!(names, filter(x -> !isa(x, Char), other_names))
-	short = @something(iterate(filter(x -> isa(x, Char), other_names)), return)[1]
+	short = try_peek(filter(x->isa(x, Char), other_names)) |> to_nullable
 	Option(name, type, names, short=short, default=default, required=required)
 end
+
+
 
 struct Argument{T, U <: T} <: Parameter{T}
 	name::Symbol
@@ -158,26 +162,5 @@ end
 function output_type(::Parameter{T})::Type{T} where {T} T end
 """Return the type outputted by a `Parameter` type"""
 function output_type(::Type{Parameter{T}})::Type{T} where {T} T end
-
-"""Convert a nullable value to a Maybe type by wrapping non-null values in Some"""
-function to_maybe(v::T)::Some{T} where {T} Some(v) end
-function to_maybe(::Nothing)::Nothing nothing end
-
-function to_array(::Nothing)::Array{Union{}}
-	[]
-end
-function to_array(val::T)::Array{T} where {T}
-	[val]
-end
-function to_array(arr::AbstractArray{T})::Array{T} where {T} Array(arr) end
-
-to_symbol(s::Symbol)::Symbol = s
-function to_symbol(s::String)::Symbol
-	try
-		Symbol(s)
-	catch e
-		error("'$s' is not a valid symbol/parameter name")
-	end
-end
 
 end

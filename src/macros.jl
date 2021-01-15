@@ -3,13 +3,14 @@ module macros
 using MacroTools
 using Maybe
 
+using ..Commands
 using ..Parameters: Argument, Option, Flag
 
 export @command
 
 macro unesc(e) e end
 
-struct Command end
+#struct Command end
 
 macro command(block::Expr)
 	#dump(block)
@@ -41,28 +42,16 @@ function make_command(fdef, params)::Array{Expr}
 	func_name = func[:name]
 	func_cmd = Symbol(func_name, "_cmd")
 
+	#TODO handle splatted arguments
+    #TODO handle default arguments
+    #TODO check types on function definition
 	argmap = [:(arg_dict[$(QuoteNode(name))]) for (name, type, splat, default) in args]
 	kwmap = [:($name = arg_dict[$(QuoteNode(name))]) for (name, type, splat, default) in kwargs]
 	[
-		esc(:($func_cmd = $(@macroexpand @unesc Command)($(params...)))),
+		esc(fdef),
 		esc(:($func_name(arg_dict::$(@macroexpand @unesc Dict)) = $func_name($(argmap...); $(kwmap...)))),
-		esc(fdef)
+		esc(:($func_cmd = $(@macroexpand @unesc Command)($(params...); func=$func_name))),
 	]
-end
-
-# todo handle splatted arguments
-struct Arg
-	name::Symbol
-	type::Maybe.T{Expr}
-	default::Maybe.T{Expr}
-	keyword::Bool
-end
-
-struct Func
-	name::Symbol
-	arguments::Array{Arg}
-	type::Maybe.T{Expr}
-	body::Expr
 end
 
 #@command begin
